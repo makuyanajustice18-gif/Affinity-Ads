@@ -1,0 +1,515 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>Affinity Ads | Discover. Advertise. Connect.</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --navy: #101827;
+      --blue: #2563eb;
+      --gold: #f5b82e;
+      --paper: #f4f6fb;
+      --ink: #172033;
+      --muted: #687386;
+      --line: #e3e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    header {
+      background: var(--navy);
+      color: white;
+      padding: 16px 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand { font-size: 23px; font-weight: 800; }
+    .brand span { color: var(--gold); }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, .button {
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--blue);
+      color: white;
+    }
+    button.secondary { background: #26364f; }
+    button.gold { background: var(--gold); color: #172033; }
+    button:disabled { opacity: .55; cursor: wait; }
+    .hero {
+      padding: 42px 6% 35px;
+      background: linear-gradient(120deg, #101827, #1e3a67);
+      color: white;
+    }
+    .hero h1 { font-size: clamp(30px, 6vw, 48px); margin: 0 0 12px; }
+    .hero p { color: #dbe6f7; max-width: 650px; line-height: 1.6; }
+    .searchbar {
+      display: flex; gap: 8px; max-width: 720px; margin-top: 22px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      font: inherit;
+      background: white;
+      color: var(--ink);
+    }
+    textarea { min-height: 95px; resize: vertical; }
+    .searchbar input { flex: 1; }
+    main { max-width: 1150px; margin: auto; padding: 25px 16px 55px; }
+    .section-title {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap; margin: 8px 0 18px;
+    }
+    .section-title h2 { margin: 0; font-size: 23px; }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .filters button { background: white; color: var(--ink); border: 1px solid var(--line); }
+    .filters button.active { background: var(--blue); color: white; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 16px;
+    }
+    .listing {
+      background: white; border: 1px solid var(--line);
+      border-radius: 13px; overflow: hidden;
+      box-shadow: 0 4px 14px #1720330a;
+    }
+    .listing img {
+      width: 100%; height: 165px; object-fit: cover; display: block;
+      background: #e8edf5;
+    }
+    .listing-body { padding: 14px; }
+    .tag {
+      display: inline-block; background: #eaf0ff; color: #214fba;
+      padding: 5px 9px; border-radius: 20px; font-size: 12px;
+      font-weight: 700; margin-bottom: 8px;
+    }
+    .listing h3 { margin: 3px 0 8px; font-size: 18px; }
+    .listing p { color: var(--muted); line-height: 1.45; margin: 7px 0; }
+    .price { font-size: 18px; font-weight: 800; margin-top: 12px; }
+    .location { font-size: 13px; color: var(--muted); }
+    .panel {
+      background: white; border: 1px solid var(--line);
+      border-radius: 13px; padding: 19px; margin: 25px 0;
+    }
+    .panel h2 { margin-top: 0; }
+    .form-grid {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 13px; font-weight: 700; }
+    .hidden { display: none !important; }
+    .notice { padding: 12px; border-radius: 9px; margin: 12px 0; background: #edf3ff; color: #214fba; }
+    .error { background: #fff0f0; color: #a32828; }
+    .muted { color: var(--muted); font-size: 14px; }
+    footer { background: var(--navy); color: #dbe6f7; padding: 25px; text-align: center; }
+    @media (max-width: 600px) {
+      header { padding: 14px; }
+      .hero { padding: 32px 18px; }
+      .searchbar { flex-direction: column; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      nav { width: 100%; }
+      nav button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Affinity <span>Ads</span></div>
+    <nav>
+      <button class="secondary" onclick="goTo('listings')">Explore ads</button>
+      <button class="gold" onclick="goTo('post-ad')">Post an ad</button>
+      <button class="secondary" id="accountButton" onclick="goTo('account')">Sign in</button>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Discover. Advertise. Connect.</h1>
+    <p>Your marketplace to discover products, services, jobs and opportunities.
+      Share what you offer and connect with people looking for it.</p>
+    <div class="searchbar">
+      <input id="searchInput" type="search" placeholder="Search products, jobs, services...">
+      <button onclick="loadListings()">Search</button>
+    </div>
+  </section>
+
+  <main>
+    <section id="account" class="panel">
+      <h2>Your Affinity Ads account</h2>
+      <p class="muted">Create an account or sign in to publish and manage your ads.</p>
+      <div id="authMessage" class="notice hidden"></div>
+      <div id="authForms">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="email">Email address</label>
+            <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+          </div>
+          <div class="field full">
+            <label for="password">Password</label>
+            <input id="password" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+          </div>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">
+          <button onclick="signIn()">Sign in</button>
+          <button class="gold" onclick="signUp()">Create account</button>
+        </div>
+      </div>
+      <div id="signedIn" class="hidden">
+        <p id="userEmail"></p>
+        <button class="secondary" onclick="signOut()">Sign out</button>
+      </div>
+    </section>
+
+    <section id="profile" class="panel hidden">
+      <h2>Your profile</h2>
+      <p class="muted">Add details so people can recognise your business or profile.</p>
+      <div class="form-grid">
+        <div class="field">
+          <label for="fullName">Your name</label>
+          <input id="fullName" placeholder="Full name">
+        </div>
+        <div class="field">
+          <label for="businessName">Business name (optional)</label>
+          <input id="businessName" placeholder="Business name">
+        </div>
+        <div class="field">
+          <label for="phone">Phone number</label>
+          <input id="phone" type="tel" placeholder="Your contact number">
+        </div>
+        <div class="field">
+          <label for="profileLocation">Location</label>
+          <input id="profileLocation" placeholder="City or town">
+        </div>
+      </div>
+      <button style="margin-top:14px" onclick="saveProfile()">Save profile</button>
+      <div id="profileMessage" class="muted"></div>
+    </section>
+
+    <section id="post-ad" class="panel">
+      <h2>Post an advertisement</h2>
+      <p class="muted">Sign in first. Your new advertisement will be submitted for approval.</p>
+      <div class="form-grid">
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category">
+            <option>Products</option>
+            <option>Services</option>
+            <option>Jobs</option>
+            <option>Businesses</option>
+            <option>Property</option>
+            <option>Vehicles</option>
+            <option>Events</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="adTitle">Advertisement title</label>
+          <input id="adTitle" maxlength="100" placeholder="What are you advertising?">
+        </div>
+        <div class="field">
+          <label for="adPrice">Price (optional)</label>
+          <input id="adPrice" type="number" min="0" step="0.01" placeholder="e.g. 25">
+        </div>
+        <div class="field">
+          <label for="currency">Currency</label>
+          <select id="currency">
+            <option value="USD">USD</option>
+            <option value="ZWG">ZWG</option>
+            <option value="ZAR">ZAR</option>
+            <option value="GBP">GBP</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="adLocation">Location</label>
+          <input id="adLocation" placeholder="City, town or area">
+        </div>
+        <div class="field">
+          <label for="imageUrl">Image link (optional)</label>
+          <input id="imageUrl" type="url" placeholder="https://example.com/photo.jpg">
+        </div>
+        <div class="field full">
+          <label for="adDescription">Description</label>
+          <textarea id="adDescription" maxlength="3000" placeholder="Describe your product, service or opportunity. Include your preferred contact details if you want people to reach you."></textarea>
+        </div>
+      </div>
+      <button style="margin-top:14px" onclick="createListing()">Submit advertisement</button>
+      <div id="adMessage" class="muted"></div>
+    </section>
+
+    <section id="listings">
+      <div class="section-title">
+        <h2>Explore advertisements</h2>
+        <span class="muted" id="listingCount"></span>
+      </div>
+      <div class="filters" id="filters">
+        <button class="active" data-category="All" onclick="chooseCategory('All', this)">All</button>
+        <button data-category="Products" onclick="chooseCategory('Products', this)">Products</button>
+        <button data-category="Services" onclick="chooseCategory('Services', this)">Services</button>
+        <button data-category="Jobs" onclick="chooseCategory('Jobs', this)">Jobs</button>
+        <button data-category="Businesses" onclick="chooseCategory('Businesses', this)">Businesses</button>
+        <button data-category="Property" onclick="chooseCategory('Property', this)">Property</button>
+        <button data-category="Vehicles" onclick="chooseCategory('Vehicles', this)">Vehicles</button>
+      </div>
+      <div id="listingGrid" class="grid">
+        <p class="muted">Loading advertisements...</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Advertise with Affinity Ads</h2>
+      <p class="muted">Create your account, publish your listing and help more people discover what you offer.</p>
+      <button onclick="goTo('account')">Get started</button>
+    </section>
+  </main>
+
+  <footer>
+    <strong>Affinity Ads</strong>
+    <p>Discover. Advertise. Connect.</p>
+    <small>© <span id="year"></span> Affinity Ads</small>
+  </footer>
+
+  <script>
+    let supabaseClient = null;
+    let currentUser = null;
+    let activeCategory = "All";
+    let allListings = [];
+
+    const $ = id => document.getElementById(id);
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        '"': "&quot;", "'": "&#39;"
+      })[char]);
+    }
+
+    function showMessage(id, message, isError = false) {
+      const box = $(id);
+      box.textContent = message;
+      box.className = "notice" + (isError ? " error" : "");
+      box.classList.remove("hidden");
+    }
+
+    function goTo(id) {
+      $(id).scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function setupApp() {
+      $("year").textContent = new Date().getFullYear();
+
+      if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY ||
+          window.SUPABASE_URL.includes("YOUR_") ||
+          window.SUPABASE_ANON_KEY.includes("YOUR_")) {
+        showMessage("authMessage",
+          "The app still needs its Supabase public URL and anon key in config.js. Do not use your service_role key.",
+          true);
+        $("listingGrid").innerHTML =
+          '<p class="muted">Connect Supabase to load real advertisements.</p>';
+        return;
+      }
+
+      if (!window.supabase) {
+        showMessage("authMessage", "Could not load the Supabase library. Please refresh the page.", true);
+        return;
+      }
+
+      supabaseClient = window.supabase.createClient(
+        window.SUPABASE_URL, window.SUPABASE_ANON_KEY
+      );
+
+      supabaseClient.auth.onAuthStateChange((_event, session) => {
+        currentUser = session?.user ?? null;
+        updateAccountView();
+        if (currentUser) loadProfile();
+        loadListings();
+      });
+
+      supabaseClient.auth.getSession().then(({ data, error }) => {
+        if (error) showMessage("authMessage", error.message, true);
+        currentUser = data.session?.user ?? null;
+        updateAccountView();
+        if (currentUser) loadProfile();
+        loadListings();
+      });
+    }
+
+    function updateAccountView() {
+      $("authForms").classList.toggle("hidden", !!currentUser);
+      $("signedIn").classList.toggle("hidden", !currentUser);
+      $("profile").classList.toggle("hidden", !currentUser);
+      $("userEmail").textContent = currentUser ? "Signed in as " + currentUser.email : "";
+      $("accountButton").textContent = currentUser ? "My account" : "Sign in";
+    }
+
+    async function signUp() {
+      if (!supabaseClient) return;
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      if (!email || password.length < 6) {
+        showMessage("authMessage", "Enter a valid email and a password with at least 6 characters.", true);
+        return;
+      }
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) return showMessage("authMessage", error.message, true);
+      if (data.session) {
+        showMessage("authMessage", "Your account has been created. You are signed in.");
+      } else {
+        showMessage("authMessage", "Account created. Check your email for the confirmation link, then sign in.");
+      }
+    }
+
+    async function signIn() {
+      if (!supabaseClient) return;
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) showMessage("authMessage", error.message, true);
+      else showMessage("authMessage", "You are signed in.");
+    }
+
+    async function signOut() {
+      if (!supabaseClient) return;
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) showMessage("authMessage", error.message, true);
+    }
+
+    async function loadProfile() {
+      if (!currentUser) return;
+      const { data, error } = await supabaseClient
+        .from("profiles").select("*").eq("id", currentUser.id).maybeSingle();
+      if (error) {
+        $("profileMessage").textContent = error.message;
+        return;
+      }
+      if (data) {
+        $("fullName").value = data.full_name || "";
+        $("businessName").value = data.business_name || "";
+        $("phone").value = data.phone || "";
+        $("profileLocation").value = data.location || "";
+      }
+    }
+
+    async function saveProfile() {
+      if (!currentUser) return showMessage("profileMessage", "Please sign in first.", true);
+      const profile = {
+        id: currentUser.id,
+        full_name: $("fullName").value.trim(),
+        business_name: $("businessName").value.trim(),
+        phone: $("phone").value.trim(),
+        location: $("profileLocation").value.trim()
+      };
+      const { error } = await supabaseClient.from("profiles").upsert(profile);
+      $("profileMessage").textContent = error ? error.message : "Profile saved.";
+    }
+
+    async function createListing() {
+      if (!currentUser) {
+        showMessage("adMessage", "Please create an account or sign in before posting an advertisement.", true);
+        goTo("account");
+        return;
+      }
+      const title = $("adTitle").value.trim();
+      const description = $("adDescription").value.trim();
+      const imageUrl = $("imageUrl").value.trim();
+      if (!title || !description) {
+        return showMessage("adMessage", "Please enter an advertisement title and description.", true);
+      }
+      if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+        return showMessage("adMessage", "Please enter a valid image link beginning with https:// or http://.", true);
+      }
+
+      const priceValue = $("adPrice").value;
+      const listing = {
+        owner_id: currentUser.id,
+        category: $("category").value,
+        title,
+        description,
+        price: priceValue === "" ? null : Number(priceValue),
+        currency: $("currency").value,
+        location: $("adLocation").value.trim(),
+        image_url: imageUrl || null,
+        status: "pending"
+      };
+
+      const { error } = await supabaseClient.from("listings").insert(listing);
+      if (error) return showMessage("adMessage", error.message, true);
+
+      showMessage("adMessage", "Your advertisement was submitted. It will appear publicly after it is approved.");
+      ["adTitle", "adDescription", "adPrice", "adLocation", "imageUrl"].forEach(id => $(id).value = "");
+      loadListings();
+    }
+
+    function chooseCategory(category, button) {
+      activeCategory = category;
+      document.querySelectorAll("#filters button").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+      renderListings();
+    }
+
+    async function loadListings() {
+      if (!supabaseClient) return;
+      $("listingGrid").innerHTML = '<p class="muted">Loading advertisements...</p>';
+
+      let query = supabaseClient.from("listings").select("*").order("created_at", { ascending: false });
+      const { data, error } = await query;
+
+      if (error) {
+        $("listingGrid").innerHTML = '<p class="muted">Could not load advertisements: ' +
+          escapeHTML(error.message) + '</p>';
+        return;
+      }
+      allListings = data || [];
+      renderListings();
+    }
+
+    function renderListings() {
+      const search = $("searchInput").value.trim().toLowerCase();
+      const results = allListings.filter(item => {
+        const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+        const text = [item.title, item.description, item.category, item.location].join(" ").toLowerCase();
+        return matchesCategory && text.includes(search);
+      });
+
+      $("listingCount").textContent = results.length + " advertisement(s)";
+      if (!results.length) {
+        $("listingGrid").innerHTML = '<p class="muted">No advertisements found yet. Try another search or check back soon.</p>';
+        return;
+      }
+
+      $("listingGrid").innerHTML = results.map(item => {
+        const image = item.image_url && /^https?:\/\//i.test(item.image_url)
+          ? escapeHTML(item.image_url)
+          : "";
+        const price = item.price !== null && item.price !== ""
+          ? escapeHTML(item.currency || "") + " " + escapeHTML(item.price)
+          : "Contact for price";
+        return `
+          <article class="listing">
+            ${image ? `<img src="${image}" alt="" loading="lazy" onerror="this.style.display='none'">` : ""}
+            <div class="listing-body">
+              <span class="tag">${escapeHTML(item.category)}</span>
+              <h3>${escapeHTML(item.title)}</h3>
+              <p>${escapeHTML(item.description)}</p>
+              <div class="price">${price}</div>
+              <div class="location">${escapeHTML(item.location || "Location not provided")}</div>
+              ${item.ow
